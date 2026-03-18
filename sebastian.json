@@ -1,0 +1,15 @@
+{
+  "name": "sebastian",
+  "version": "1.0.0",
+  "description": "Agent d'IA Autònom SEBASTIAN (OpenClaw Architecture)",
+  "main": "src/gateway/index.js",
+  "type": "module",
+  "config": {
+    "model": "openrouter/anthropic/claude-3.5-sonnet",
+    "failoverModel": "openrouter/google/gemini-2.0-flash-001",
+    "maxTokens": 40000,
+    "heartbeatInterval": 1800000,
+    "sandbox": "off",
+    "port": 18789
+  }
+}

@@ -1,0 +1,34 @@
+{
+    "name": "file_ops",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "operation": {
+                "type": "string",
+                "enum": [
+                    "read",
+                    "write",
+                    "append",
+                    "list"
+                ]
+            },
+            "source": {
+                "type": "string",
+                "description": "Cam\u00ed del fitxer o directori."
+            },
+            "content": {
+                "type": "string",
+                "description": "Contingut si s'escriu o s'afegeix."
+            },
+            "destination": {
+                "type": "string",
+                "description": "Dest\u00ed per a c\u00f2pia o mogut."
+            }
+        },
+        "required": [
+            "operation",
+            "source"
+        ]
+    },
+    "entry_point": "tools/file_ops.py"
+}

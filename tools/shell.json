@@ -1,0 +1,16 @@
+{
+    "name": "shell",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "command": {
+                "type": "string",
+                "description": "L'ordre a executar al PowerShell."
+            }
+        },
+        "required": [
+            "command"
+        ]
+    },
+    "entry_point": "tools/shell.py"
+}
