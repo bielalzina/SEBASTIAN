@@ -59,3 +59,53 @@ S'ha transformat un projecte buit (`SEBASTIAN`) en un agent funcional amb capaci
 2.  Iniciar en Sebastian i demanar-li la primera tasca d'execució proactiva.
 
 *Document generat automàticament per Antigravity a petició de Gabriel.*
+
+---
+
+## Sessió: Desplegament i Depuració en Debian 13 🐧
+**Data**: 2026-03-19T01:16:00+01:00 fins 2026-03-19T07:31:00+01:00
+**Usuari**: Gabriel (GABRIEL)
+**Objectiu**: Moure l'agent SEBASTIAN a un servidor amb Debian 13, millorar la robustesa del sistema ReAct i implementar seguretat web.
+
+---
+
+### 📋 Resum de la Sessió
+
+S’ha realitzat el desplegament amb èxit a Debian 13 (Trixie), resolent problemes de camins de Python, execució paral·lela de processos i seguretat d'accés remot.
+
+### 🛠️ Millores i Canvis Implementats
+
+1.  **Migració a Linux (Debian 13)**:
+    *   Configuració de l'entorn virtual (`venv`) i gestió de paquets Linux.
+    *   Creació del fitxer `requirements.txt` amb totes les dependències (`httpx`, `fastapi`, `uvicorn`, `pydantic-settings`, `python-telegram-bot`).
+    *   Configuració de **Systemd** per a l'execució persistent de l'agent com a servei de sistema.
+
+2.  **Arquitectura de Processos**:
+    *   **Multiprocessing**: S'ha reescrit `bin/sebastian.py` per llançar el servidor WebSocket i el bot de Telegram com a processos paral·lels independents, evitant bloquejos.
+    *   **Ruta de Paquets**: Arreglat el `sys.path` dinàmicament per evitar l'error `ModuleNotFoundError: No module named 'src'` en entorns de producció.
+
+3.  **Optimització del Motor ReAct**:
+    *   **Robustesa JSON**: Implementada extracció per **Regex** en el loop de raonament per ignorar text extra de l'LLM i evitar errors de "Extra data".
+    *   **Paciència de l'Agent**: Augmentat el límit d'iteracions (`MAX_ITERATIONS`) de 5 a 30 per a tasques complexes.
+
+4.  **Seguretat i Interfície Web**:
+    *   **Interfície Neural**: Disseny d'una landing page premium amb estil *Glassmorphism* i xat integrat.
+    *   **Zero-Trust Access**: Implementació de seguretat via `WEB_ACCESS_TOKEN`. Ara l'accés web i la connexió WebSocket requereixen un token de seguretat a la URL.
+
+5.  **Refinament de la Identitat**:
+    *   Actualització de `IDENTITY.md` i `SOUL.md` per incloure coneixement sobre els seus propis canals de comunicació.
+    *   Neteja de `TOOLS.md` per evitar que l'agent intenti utilitzar eines planificades però encara no existents (`python_exec`).
+
+---
+
+### 📝 Resum del Diàleg Rellevant
+
+- **Gabriel**: Demana instruccions per moure SEBASTIAN a Debian 13.
+- **Antigravity**: Proporciona el workflow d'instal·lació i crea el `requirements.txt`.
+- **System Analysis**: L'agent detecta fallades en el servei de Debian per problemes d'importació de mòduls i falta de paral·lelisme.
+- **Antigravity**: Entrega el codi corregit de `bin/sebastian.py` amb multiprocés i `src/gateway/core.py` amb millores de parsing.
+- **Gabriel**: Reporta errors de "Extra data" en el loop de ReAct i problemes amb una eina inexistent (`python_exec`).
+- **Antigravity**: Neteja el workspace i fa el motor de parsing més "intel·ligent" davant la verbositat de l'IA.
+- **Seguretat**: Gabriel demana tancar l'accés web. S'implementa un sistema de tokens asimètrics en el `.env` i la URL.
+
+*Document actualitzat automàticament per Antigravity.*

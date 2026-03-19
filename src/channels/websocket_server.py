@@ -15,7 +15,7 @@ async def get_home(request: Request, token: str = None):
     if token != settings.WEB_ACCESS_TOKEN:
         return HTMLResponse(content="<h1>403 Forbidden</h1><p>Necessites un token vàlid per accedir.</p>", status_code=403)
         
-    return f"""
+    html_template = """
     <!DOCTYPE html>
     <html lang="ca">
     <head>
@@ -37,7 +37,7 @@ async def get_home(request: Request, token: str = None):
                 overflow: hidden;
                 display: flex;
                 height: 100vh;
-            }
+            }}
             .sidebar {{
                 width: 300px;
                 background: rgba(0, 0, 0, 0.4);
@@ -46,21 +46,21 @@ async def get_home(request: Request, token: str = None):
                 display: flex;
                 flex-direction: column;
                 padding: 30px;
-            }
+            }}
             .main {{
                 flex: 1;
                 display: flex;
                 flex-direction: column;
                 background: radial-gradient(circle at 50% 50%, #16213e 0%, #0a0b10 100%);
                 position: relative;
-            }
+            }}
             h1 {{
                 font-family: 'Orbitron', sans-serif;
                 color: var(--accent);
                 font-size: 1.5rem;
                 letter-spacing: 2px;
                 margin: 0 0 20px 0;
-            }
+            }}
             #chat-container {{
                 flex: 1;
                 overflow-y: auto;
@@ -69,33 +69,33 @@ async def get_home(request: Request, token: str = None):
                 flex-direction: column;
                 gap: 20px;
                 scroll-behavior: smooth;
-            }
+            }}
             .message {{
                 max-width: 80%;
                 padding: 15px 20px;
                 border-radius: 15px;
                 line-height: 1.5;
                 animation: fadeIn 0.3s ease;
-            }
+            }}
             .user-msg {{
                 align-self: flex-end;
                 background: var(--accent);
                 color: black;
                 font-weight: 600;
-            }
+            }}
             .bot-msg {{
                 align-self: flex-start;
                 background: var(--card);
                 border: 1px solid rgba(255,255,255,0.1);
                 border-left: 4px solid var(--accent);
-            }
+            }}
             .input-area {{
                 padding: 30px;
                 background: rgba(0,0,0,0.5);
                 border-top: 1px solid rgba(255,255,255,0.1);
                 display: flex;
                 gap: 15px;
-            }
+            }}
             input {{
                 flex: 1;
                 background: rgba(255,255,255,0.05);
@@ -105,7 +105,7 @@ async def get_home(request: Request, token: str = None):
                 border-radius: 10px;
                 outline: none;
                 transition: 0.3s;
-            }
+            }}
             input:focus {{ border-color: var(--accent); }}
             button {{
                 background: var(--accent);
@@ -115,7 +115,7 @@ async def get_home(request: Request, token: str = None):
                 font-weight: bold;
                 cursor: pointer;
                 transition: 0.3s;
-            }
+            }}
             button:hover {{ transform: scale(1.05); filter: brightness(1.2); }}
             @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(10px); }} }}
             .status {{ font-size: 0.8rem; color: #888; margin-top: auto; }}
@@ -167,6 +167,7 @@ async def get_home(request: Request, token: str = None):
     </body>
     </html>
     """
+    return HTMLResponse(content=html_template.format(token=token))
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = None):
