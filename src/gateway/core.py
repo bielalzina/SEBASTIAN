@@ -10,8 +10,11 @@ from typing import List, Dict, Any, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Configuració de logs
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger("SEBASTIAN-Gateway")
+
 
 class Settings(BaseSettings):
     OPENROUTER_API_KEY: str
@@ -22,11 +25,13 @@ class Settings(BaseSettings):
     WORKSPACE_PATH: str = "./workspace"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+
 try:
     settings = Settings()
 except Exception as e:
     logger.error(f"Error carregant configuració: {e}")
     sys.exit(1)
+
 
 class ToolExecutor:
     def __init__(self):
@@ -36,7 +41,9 @@ class ToolExecutor:
         tools = []
         for file in os.listdir(self.tools_path):
             if file.endswith(".json"):
-                with open(os.path.join(self.tools_path, file), "r", encoding="utf-8") as f:
+                with open(
+                    os.path.join(self.tools_path, file), "r", encoding="utf-8"
+                ) as f:
                     tools.append(json.load(f))
         return tools
 
@@ -49,107 +56,135 @@ class ToolExecutor:
             tool_def = json.load(f)
 
         entry_point = tool_def["entry_point"]
-        
+
         # En mode off, executem directament
         if tool_name == "shell":
             cmd = arguments.get("command")
             # Crida a tools/shell.py
             process = await asyncio.create_subprocess_exec(
-                "python", entry_point, cmd,
+                "python",
+                entry_point,
+                cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
         elif tool_name == "file_ops":
             args_str = json.dumps(arguments)
             process = await asyncio.create_subprocess_exec(
-                "python", entry_point, args_str,
+                "python",
+                entry_point,
+                args_str,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
         else:
-             # Default fallback
-             process = await asyncio.create_subprocess_exec(
-                "python", entry_point, json.dumps(arguments),
+            # Default fallback
+            process = await asyncio.create_subprocess_exec(
+                "python",
+                entry_point,
+                json.dumps(arguments),
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
 
         stdout, stderr = await process.communicate()
         if stderr:
             logger.error(f"Error executant {tool_name}: {stderr.decode()}")
-        
+
         return stdout.decode().strip()
+
 
 class ReActLoop:
     def __init__(self, llm_client, executor):
         self.llm_client = llm_client
         self.executor = executor
-        self.max_iterations = 5
+        self.max_iterations = 10
 
     async def run(self, messages: List[Dict[str, str]], model: str) -> Dict[str, Any]:
         tools = self.executor.get_available_tools()
         tools_desc = "\nEines disponibles:\n" + json.dumps(tools, indent=2)
-        
+
         # Inyectar tools en el system prompt de forma dinámica si no están en TOOLS.md
         messages[0]["content"] += tools_desc
-        messages[0]["content"] += "\nSi vols usar una eina, respon amb: TOOL_CALL: {\"name\": \"nom\", \"arguments\": {...}}"
+        messages[0][
+            "content"
+        ] += '\nSi vols usar una eina, respon amb: TOOL_CALL: {"name": "nom", "arguments": {...}}'
 
         for i in range(self.max_iterations):
             logger.info(f"Iteració ReAct {i+1}...")
             response = await self.llm_client.get_completion(messages, model)
             content = response.get("content", "")
-            
+
             if "TOOL_CALL:" in content:
                 try:
                     # Extraure JSON
                     json_str = content.split("TOOL_CALL:")[1].strip()
                     tool_call = json.loads(json_str)
                     logger.info(f"Executant eina: {tool_call['name']}")
-                    
-                    result = await self.executor.execute(tool_call["name"], tool_call["arguments"])
-                    
+
+                    result = await self.executor.execute(
+                        tool_call["name"], tool_call["arguments"]
+                    )
+
                     messages.append(response)
-                    messages.append({"role": "user", "content": f"RESULTAT DE L'EINA: {result}"})
+                    messages.append(
+                        {"role": "user", "content": f"RESULTAT DE L'EINA: {result}"}
+                    )
                 except Exception as e:
                     logger.error(f"Error parsejant o executant eina: {e}")
                     messages.append(response)
                     messages.append({"role": "user", "content": f"ERROR: {str(e)}"})
             else:
                 return response
-        
-        return {"role": "assistant", "content": "He superat el límit d'iteracions de ReAct."}
+
+        return {
+            "role": "assistant",
+            "content": "He superat el límit d'iteracions de ReAct.",
+        }
+
 
 class ContextAssembler:
     def __init__(self, workspace_path: str):
         self.workspace_path = workspace_path
-        self.system_files = ['SOUL.md', 'AGENTS.md', 'IDENTITY.md', 'USER.md', 'TOOLS.md', 'MEMORY.md']
+        self.system_files = [
+            "SOUL.md",
+            "AGENTS.md",
+            "IDENTITY.md",
+            "USER.md",
+            "TOOLS.md",
+            "MEMORY.md",
+        ]
 
     async def assemble(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         system_prompt = "Ets en SEBASTIAN, un agent d'IA autònom.\n\n"
         for file_name in self.system_files:
             file_path = os.path.join(self.workspace_path, file_name)
             if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     system_prompt += f"--- {file_name} ---\n{f.read()}\n\n"
         return [{"role": "system", "content": system_prompt}] + messages
+
 
 class LLMClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
 
-    async def get_completion(self, messages: List[Dict[str, str]], model: str) -> Dict[str, Any]:
+    async def get_completion(
+        self, messages: List[Dict[str, str]], model: str
+    ) -> Dict[str, Any]:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "HTTP-Referer": "https://github.com/bielalzina/SEBASTIAN",
             "X-Title": "SEBASTIAN Agent",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
         payload = {"model": model, "messages": messages, "max_tokens": 4000}
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(self.base_url, headers=headers, json=payload)
             response.raise_for_status()
-            return response.json()['choices'][0]['message']
+            return response.json()["choices"][0]["message"]
+
 
 class SebastianGateway:
     def __init__(self):
@@ -163,23 +198,27 @@ class SebastianGateway:
     async def process_message(self, session_id: str, text: str):
         if session_id not in self.sessions:
             self.sessions[session_id] = []
-        
+
         self.sessions[session_id].append({"role": "user", "content": text})
         full_messages = await self.context_assembler.assemble(self.sessions[session_id])
-        
+
         try:
             response_msg = await self.react_loop.run(full_messages, self.default_model)
             self.sessions[session_id].append(response_msg)
-            return response_msg.get('content', 'No he pogut generar cap resposta.')
+            return response_msg.get("content", "No he pogut generar cap resposta.")
         except Exception as e:
             logger.error(f"Error: {e}")
             return f"Error: {e}"
 
+
 async def main():
     gateway = SebastianGateway()
     # Test: llistar fitxers
-    res = await gateway.process_message("test-session", "Sebastian, llista els fitxers del directori actual.")
+    res = await gateway.process_message(
+        "test-session", "Sebastian, llista els fitxers del directori actual."
+    )
     print(f"\nSEBASTIAN: {res}\n")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
