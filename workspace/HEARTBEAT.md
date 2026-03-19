@@ -10,3 +10,6 @@ Llista de tasques periòdiques. Cada entrada ha de tenir un format que SEBASTIAN
 ## Tasques Diàries
 - [ ] 🧹 **Cleanup**: Neteja logs vells i compacta el context si cal.
 - [ ] 📅 **Agenda**: Resumeix l'agenda de l'usuari (si té accés a calendari).
+
+## Tasques Pendents
+- [ ] Verificar l'estat del bot de Telegram i assegurar-se que s'està executant amb les noves credencials.
