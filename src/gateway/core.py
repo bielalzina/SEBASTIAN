@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     GATEWAY_PORT: int = 18789
     WORKSPACE_PATH: str = "./workspace"
     MAX_ITERATIONS: int = 30
+    WEB_ACCESS_TOKEN: str = "CAMBIAME"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
