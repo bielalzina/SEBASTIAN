@@ -94,25 +94,27 @@ class ReActLoop:
             logger.info(f"Iteració ReAct {i+1}/{self.max_iterations}...")
             response = await self.llm_client.get_completion(messages, model)
             content = response.get("content", "")
-
+            
             if "TOOL_CALL:" in content:
                 try:
-                    json_str = content.split("TOOL_CALL:")[1].strip()
+                    import re
+                    # Busquem el primer JSON dins del text des de TOOL_CALL:
+                    json_match = re.search(r"TOOL_CALL:\s*(\{.*\})", content, re.DOTALL)
+                    if not json_match:
+                        raise ValueError("No s'ha trobat un format JSON vàlid després de TOOL_CALL:")
+                    
+                    json_str = json_match.group(1).strip()
                     tool_call = json.loads(json_str)
+                    
                     logger.info(f"Executant eina: {tool_call['name']}")
-
-                    result = await self.executor.execute(
-                        tool_call["name"], tool_call["arguments"]
-                    )
-
+                    result = await self.executor.execute(tool_call["name"], tool_call["arguments"])
+                    
                     messages.append(response)
-                    messages.append(
-                        {"role": "user", "content": f"RESULTAT DE L'EINA: {result}"}
-                    )
+                    messages.append({"role": "user", "content": f"RESULTAT DE L'EINA: {result}"})
                 except Exception as e:
                     logger.error(f"Error parsejant o executant eina: {e}")
                     messages.append(response)
-                    messages.append({"role": "user", "content": f"ERROR: {str(e)}"})
+                    messages.append({"role": "user", "content": f"ERROR: {str(e)} (Assegura't de tancar el JSON correctament)"})
             else:
                 return response
 
