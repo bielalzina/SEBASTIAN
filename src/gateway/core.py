@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     SANDBOX_MODE: str = "off"
     GATEWAY_PORT: int = 18789
     WORKSPACE_PATH: str = "./workspace"
-    MAX_ITERATIONS: int = 10
+    MAX_ITERATIONS: int = 30
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
